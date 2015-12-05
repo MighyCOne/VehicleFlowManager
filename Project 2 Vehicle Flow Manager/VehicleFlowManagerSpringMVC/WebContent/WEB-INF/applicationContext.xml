@@ -1,0 +1,159 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:context="http://www.springframework.org/schema/context" xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+        http://www.springframework.org/schema/beans     
+        http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+        http://www.springframework.org/schema/context 
+        http://www.springframework.org/schema/context/spring-context-3.0.xsd
+        http://www.springframework.org/schema/mvc
+        http://www.springframework.org/schema/mvc/spring-mvc-3.0.xsd
+        http://www.springframework.org/schema/tx 
+		http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
+        http://www.springframework.org/schema/aop 
+		http://www.springframework.org/schema/aop/spring-aop-3.0.xsd">
+
+
+	<bean id="serverDatasource" class="org.springframework.jndi.JndiObjectFactoryBean">
+		<property name="jndiName" value="oracleds" />
+		<property name="jndiEnvironment">
+			<props>
+				<prop key="java.naming.factory.initial">weblogic.jndi.WLInitialContextFactory</prop>
+				<prop key="java.naming.provider.url">t3://localhost:7001</prop>
+			</props>
+		</property>
+	</bean>
+
+
+	<bean id="mySessionFactory"
+		class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean">
+		<property name="dataSource" ref="serverDatasource"></property>
+		<property name="annotatedClasses">
+			<list>
+				<value>com.eintern.orm.entity.Credentials</value>
+				<value>com.eintern.orm.entity.Employee</value>
+				<value>com.eintern.orm.entity.Location</value>
+				<value>com.eintern.orm.entity.Request</value>
+				<value>com.eintern.orm.entity.Vehicle</value>
+			</list>
+
+		</property>
+		<property name="hibernateProperties">
+			<value>hibernate.dialect = org.hibernate.dialect.Oracle10gDialect
+			</value>
+		</property>
+		<property name="SchemaUpdate">
+			<value>true</value>
+		</property>
+
+	</bean>
+
+	<bean id="authDaoImpl" class="com.eintern.orm.dao.impl.AuthenticateUserDAOImpl">
+		<property name="sessionFactory" ref="mySessionFactory" />
+	</bean>
+
+	<bean id="genDaoImpl" class="com.eintern.orm.dao.impl.HibernateGenericDAOImpl">
+		<property name="sessionFactory" ref="mySessionFactory" />
+	</bean>
+
+	<bean id="reqDaoImpl" class="com.eintern.orm.dao.impl.RequestDAOImpl">
+		<property name="sessionFactory" ref="mySessionFactory" />
+	</bean>
+
+	<!-- <bean id="securityInject" class="com.eintern.business.DirectAccessRedirectSecurityController"/>
+	
+	<bean id="manager" class="com.controller.ManagerController"/>
+
+	<aop:aspectj-autoproxy/> -->
+	
+
+	<!-- ******** TRANSACTION MANAGEMENT USING AOP ************* -->
+
+	<bean id="myTransactionManager"
+		class="org.springframework.orm.hibernate3.HibernateTransactionManager">
+		<property name="sessionFactory" ref="mySessionFactory" />
+	</bean>
+
+	<!-- <aop:config>
+	
+		<aop:aspect ref="securityInject">
+		
+			<aop:pointcut id="allcontrollers" expression="execution(* com.controller.*.*(..)) and args(session)" />
+			
+			<aop:before method="redirectPage" pointcut-ref="allcontrollers" arg-names="session" />
+			
+		</aop:aspect>
+		
+	</aop:config>
+ -->
+
+	<aop:config>
+		<aop:pointcut id="authMethods"
+			expression="execution(* com.eintern.orm.dao.AuthenticateUserDAO.*(..))" />
+		<aop:advisor advice-ref="txAdvice" pointcut-ref="authMethods" />
+	</aop:config>
+
+	<aop:config>
+		<aop:pointcut id="hgMethods"
+			expression="execution(* com.eintern.orm.dao.HibernateGenericDAO.*(..))" />
+		<aop:advisor advice-ref="txAdvice2" pointcut-ref="hgMethods" />
+	</aop:config>
+
+	<aop:config>
+		<aop:pointcut id="reqMethods"
+			expression="execution(* com.eintern.orm.dao.RequestDAO.*(..))" />
+		<aop:advisor advice-ref="txAdvice3" pointcut-ref="reqMethods" />
+	</aop:config>
+
+
+	<!-- <tx:annotation-driven transaction-manager="myTransactionManager"/> -->
+	<!-- The tx tags can be eliminated using @Transactional in the EmployeeDAOImpl 
+		on the methods Spring rolls back transactions for runtime exceptions only 
+		NOt checked exceptions. If the popagation -->
+	<tx:advice id="txAdvice" transaction-manager="myTransactionManager">
+		<tx:attributes>
+
+
+			<tx:method name="authenticateUser" propagation="REQUIRES_NEW"
+				isolation="READ_COMMITTED" rollback-for="Exception" />
+
+		</tx:attributes>
+	</tx:advice>
+
+	<tx:advice id="txAdvice2" transaction-manager="myTransactionManager">
+		<tx:attributes>
+
+
+			<tx:method name="retrieveAll" propagation="REQUIRES_NEW"
+				isolation="READ_COMMITTED" rollback-for="true" />
+
+			<tx:method name="insert" propagation="REQUIRES_NEW"
+				isolation="READ_COMMITTED" read-only="false" />
+
+			<tx:method name="delete" propagation="REQUIRES_NEW"
+				isolation="READ_COMMITTED" rollback-for="false" />
+
+			<tx:method name="retrieveById" propagation="REQUIRES_NEW"
+				isolation="READ_COMMITTED" rollback-for="Exception" />
+
+			<tx:method name="retrieveByUsername" propagation="REQUIRES_NEW"
+				isolation="READ_COMMITTED" rollback-for="Exception" />
+
+			<tx:method name="update" propagation="REQUIRES_NEW"
+				isolation="READ_COMMITTED" rollback-for="Exception" />
+
+		</tx:attributes>
+	</tx:advice>
+
+	<tx:advice id="txAdvice3" transaction-manager="myTransactionManager">
+		<tx:attributes>
+
+			<tx:method name="retrieveRequestsByStatus" propagation="REQUIRES_NEW"
+				isolation="READ_COMMITTED" rollback-for="Exception" />
+			<tx:method name="retrieveVehiclesNotAtLocation"
+				propagation="REQUIRES_NEW" isolation="READ_COMMITTED" rollback-for="Exception" />
+
+		</tx:attributes>
+	</tx:advice>
+</beans>
