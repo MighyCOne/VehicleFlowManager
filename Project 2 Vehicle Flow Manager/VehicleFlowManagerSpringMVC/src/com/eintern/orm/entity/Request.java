@@ -74,8 +74,8 @@ public class Request {
 	}
 	public String toString(){
 		
-		return "{\"reqId\":"+"\""+getReqId()+"\""+",\"shipping_location_id\":"+"\""+getShipping_location_id()+"\""+",\"current_location_id\":"+"\""+location.getLocId()+"\""+"}";
-		
+		/*return "{\"reqId\":"+"\""+getReqId()+"\""+",\"shipping_location_id\":"+"\""+getShipping_location_id()+"\""+",\"current_location_id\":"+"\""+location.getLocId()+"\""+"}";*/
+		return "{\"reqId\":"+"\""+getReqId()+"\""+",\"shipping_location_id\":"+"\""+getShipping_location_id()+"\""+",\"current_location_id\":"+"\""+location.getLocId()+"\""+",\"status\":"+"\""+getStatus()+"\""+",\"vehicle_id\":"+"\""+vehicle.getVehicleId()+"\""+"}";
 	}
 	
 }

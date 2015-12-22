@@ -18,7 +18,7 @@ public class Emailer {
 			int locId, String shippingLocName, int shippingLocId, String locName, String lastUpdateDate) {
 
 		final String username = senderEmail;
-		final String password = "Winggundam0!!!";
+		final String password = "abc123"; 
 
 		Properties props = new Properties();
 		props.put("mail.smtp.auth", "true");

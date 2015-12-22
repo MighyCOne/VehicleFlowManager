@@ -28,6 +28,9 @@ public class ApprovedVehicleResource {
 	
 	@Inject
 	private RequestDAO reqDaoImpl;
+	
+	@Inject
+	private HibernateGenericDAO genDaoImpl;
 
 	
 	//@GET
@@ -35,7 +38,8 @@ public class ApprovedVehicleResource {
 	@Produces("application/json")
 	public @ResponseBody String retrieveVehicle() {
 		
-		List list = reqDaoImpl.retrieveRequestsByStatus(Request.class, "Approved");
+		//List list = reqDaoImpl.retrieveRequestsByStatus(Request.class, "Approved");
+		List list =genDaoImpl.retrieveAll(Request.class);
 		// write vehicle information as JSON Objects
 		//store the json objects in an arraylist
 		//printout the arraylist's objects as appended strings
@@ -53,7 +57,8 @@ public class ApprovedVehicleResource {
 		list.add(builder.toString());
 		list.add("hi");*/
 	
-		builder.append("{\"requests\":[");
+		/*builder.append("{\"requests\":[");*/
+		builder.append("[");
 		Iterator iter=list.iterator();
 
 		while(iter.hasNext()){
@@ -64,7 +69,8 @@ public class ApprovedVehicleResource {
 				builder.append(",");
 			}
 		}
-		builder.append("]}");
+		/*builder.append("]}");*/
+		builder.append("]");
 		
 		return builder.toString();
 
